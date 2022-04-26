@@ -5,12 +5,18 @@ import static com.prgrms.kdtspringwork.JdbcUtils.toUUID;
 
 import com.prgrms.kdtspringwork.model.Category;
 import com.prgrms.kdtspringwork.model.Product;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public class ProductJdbcRepository implements ProductRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -27,7 +33,14 @@ public class ProductJdbcRepository implements ProductRepository {
 
     @Override
     public Product insert(Product product) {
-        return null;
+        var update = jdbcTemplate.update(
+            "insert into products(product_id, product_name, category, price, description, created_at, updated_at) values(UUID_TO_BIN(:productId), :productName, :category, :price, :description, :createdAt, :updatedAt)",
+            toParamMap(product));
+        if (update != 1) {
+            throw new RuntimeException("Noting was inserted");
+        }
+
+        return product;
     }
 
     @Override
@@ -37,17 +50,39 @@ public class ProductJdbcRepository implements ProductRepository {
 
     @Override
     public Optional<Product> findById(UUID productId) {
-        return Optional.empty();
+        try {
+            return Optional.ofNullable(
+                jdbcTemplate.queryForObject(
+                    "SELECT * FROM products WHERE product_id = UUID_TO_BIN(:productId)",
+                    Collections.singletonMap("productId", productId.toString().getBytes()),
+                    productRowMapper)
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
     public Optional<Product> findByName(String productName) {
-        return Optional.empty();
+        try {
+            return Optional.ofNullable(
+                jdbcTemplate.queryForObject(
+                    "SELECT * FROM products WHERE product_name = :productName",
+                    Collections.singletonMap("productName", productName),
+                    productRowMapper)
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
     public List<Product> findByCategory(Category category) {
-        return null;
+        return jdbcTemplate.query(
+            "SELECT * FROM products WHERE category = :category",
+            Collections.singletonMap("category", category.toString()),
+            productRowMapper
+        );
     }
 
     @Override
@@ -73,5 +108,17 @@ public class ProductJdbcRepository implements ProductRepository {
             updatedAt
         );
     };
+
+    private Map<String, Object> toParamMap(Product product) {
+        HashMap<String, Object> paramMap = new HashMap<>();
+        paramMap.put("productId", product.getProductId().toString().getBytes());
+        paramMap.put("productName", product.getProductName());
+        paramMap.put("category", product.getCategory().toString());
+        paramMap.put("price", product.getPrice());
+        paramMap.put("description", product.getDescription());
+        paramMap.put("createdAt", product.getCreatedAt());
+        paramMap.put("updatedAt", product.getUpdatedAt());
+        return paramMap;
+    }
 
 }
