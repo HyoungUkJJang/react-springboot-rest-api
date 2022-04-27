@@ -75,4 +75,8 @@ public class Order {
         return updatedAt;
     }
 
+    public String getPostcode() {
+        return postcode;
+    }
+
 }
