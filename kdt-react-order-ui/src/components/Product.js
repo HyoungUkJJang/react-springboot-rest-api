@@ -11,7 +11,7 @@ export function Product(props) {
   return (
       <>
         <div className="col-2"><img className="img-fluid"
-                                    src="https://i.imgur.com/HKOFQYa.jpeg"
+                                    src="https://i.imgur.com/XWyx0XH.jpeg"
                                     alt=""/></div>
         <div className="col">
           <div className="row text-muted">{category}</div>

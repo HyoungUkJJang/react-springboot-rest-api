@@ -25,6 +25,29 @@ function App() {
     .then(v => setProducts(v.data));
   }, []);
 
+  const handleOrderSubmit = (order) => {
+    if(items.length===0) {
+      alert("아이템을 추가해 주세요.")
+    } else {
+      axios.post("http://localhost:8080/api/v1/orders", {
+        email: order.email,
+        address: order.address,
+        postcode: order.postcode,
+        orderItems: items.map(v => ({
+          productId: v.productId,
+          category: v.category,
+          price: v.price,
+          quantity: v.count
+        }))
+      }).then(
+          v => alert("주문이 정상적으로 접수되었습니다."),
+          e => {
+            alert("서버 장애");
+            console.log(e);
+          })
+    }
+  }
+
   return (
       <div className="container-fluid">
         <div className="row justify-content-center m-4">
@@ -33,10 +56,10 @@ function App() {
         <div className="card">
           <div className="row">
             <div className="col-md-8 mt-4 d-flex flex-column align-items-start p-3 pt-0">
-              <ProductList products={products}onAddClick={handleAddClicked}/>
+              <ProductList products={products} onAddClick={handleAddClicked}/>
             </div>
             <div className="col-md-4 summary p-4">
-              <Summary items={items}/>
+              <Summary items={items} onOrderSubmit={handleOrderSubmit}/>
             </div>
           </div>
         </div>
